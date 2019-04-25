@@ -1,0 +1,54 @@
+version: '3'
+services:
+  ### PHP-FPM Container
+  php-fpm:
+    build: ./build/php-fpm
+    volumes:
+      - ../:/var/www
+    expose:
+      - "9000"
+    links:
+      - mysql
+
+  ### NGINX Container
+  nginx:
+    build: ./build/nginx
+    volumes:
+      - ./logs/nginx/:/var/log/nginx
+      - ../:/var/www
+      - ./data/nginx/sites-available:/etc/nginx/sites-available
+    ports:
+      - "4380:80"
+      - "4443:443"
+    links:
+      - php-fpm
+
+  ### MySQL Container
+  mysql:
+    build: ./build/mysql
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    expose:
+      - "3306"
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+
+  ### Application Code Container
+  application:
+    build: ./build/application
+
+
+  ### Workspace Utilities Container
+  workspace:
+    build: ./build/workspace
+    volumes:
+      - ../:/var/www
+    links:
+      - mysql
+    tty: true
+
+volumes:
+  src:
